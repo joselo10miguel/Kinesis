@@ -1,0 +1,132 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Paciente</title>
+    <meta name="description" content="Reporte Paciente" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+       @import url('https://fonts.cdnfonts.com/css/pacifico');
+                
+
+        @page {
+            font-family: 'Pacifico', sans-serif;
+            size: A4;
+            margin: 3cm;
+        }
+
+
+        h1 {
+            color: #000000bb;
+            font-family: 'Pacifico', sans-serif;
+            font-size: 40pt;
+            margin: 0;
+        }
+
+
+        .table th {
+            background-color: #141515;
+            color: white;
+            font-size: 10pt;
+          
+            text-transform: uppercase;
+            border-bottom: .2mm solid #a9a;
+            font-size: 10pt;
+            padding: 0.5em 1em;
+            text-transform: uppercase;
+            padding: 0.5em 1em;
+            text-align: center;
+        }
+
+
+        .table td:last-of-type {
+            color: #000000ad;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .table#total {
+            border-style: solid;
+            border-width: 2cm 3cm;
+            bottom: 0;
+            font-size: 20pt;
+            position: absolute;
+            width: 18cm;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1> <img src="{% static 'img/logo.pngs' %}  " alt=""> Kinesis</h1>
+
+        <div class="row patient-info">
+            <div class="col-6">
+                <h3>Paciente</h3>
+                <p><strong>Nombres:</strong> {{ paciente.nombres }}</p>
+                <p><strong>Apellidos:</strong> {{ paciente.apellidos }}</p>
+                <p><strong>Correo:</strong> {{ paciente.correo }}</p>
+                <p><strong>Cédula:</strong> {{ paciente.cedula }}</p>
+                <p><strong>Dirección:</strong> {{ paciente.direccion }}</p>
+                <p><strong>Celular:</strong> {{ paciente.celular }}</p>
+                <p><strong>Género:</strong> {{ paciente.genero }}</p>
+                <p><strong>Edad:</strong> {{ paciente.edad }}</p>
+                <p><strong>Lesión:</strong> {{ paciente.tipo_lesion }}</p>
+            </div>
+
+            <div class="col-6 text-right">
+                <h3>Información</h3>
+                <p><strong>Fecha:</strong> {{fecha_actual}}</p>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th class="text-center">Fecha de las Rutinas</th>
+                        <th class="text-center">Progreso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dia in data_por_dia %}
+                        <tr>
+                            <td class="text-center">{{dia.fecha}}</td>
+                            <td class="text-center">{{dia.progreso}}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="total">
+                <thead>
+                    <tr>
+                        <th >Rutinas Asignadas</th>
+                        <th >Rutinas Completadas</th>
+                        <th >Progreso Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td >{{paciente.rutinas_asignadas}}</td>
+                        <td >{{rutinas_completas}}</td>
+                        <td >{{progreso}}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+
+
+
