@@ -124,9 +124,8 @@
                                                     <td>{{ rutina.fecha_fin }}</td>
                                                     <td>
                                                         {% if not rutina.is_completed %}
-                                                        <a class="btn btn-primary" data-rutina-id="{{ rutina.numero_rutina }}" data-rutina-fecha="{{ rutina.fecha_inicio|date:"Y-m-d" }}" data-paciente-id="{{ paciente.id }}"> <i class="fas fa-pencil-alt"></i>Editar</a>
-
-                                                            <br> <div class="modal" id="rutina-dialog-edit-{{ rutina.numero_rutina }}" style="display: none">          
+                                                            <a class="btn btn-primary open-dialog-edit" data-rutina-id="{{ rutina.numero_rutina }}" data-rutina-fecha="{{ rutina.fecha_inicio|date:"Y-m-d" }}" data-paciente-id="{{ paciente.id }}">Editar Rutina</a>  
+                                                            <div class="modal" id="rutina-dialog-edit-{{ rutina.numero_rutina }}" style="display: none">          
                                                                 <div class="modal-dialog">
                                                                     <div class="modal-content">
                                                                         <div class="modal-body">
@@ -140,8 +139,8 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            </div>
-                                                          <br>  <button class="btn btn-danger" data-rutina-id="{{ rutina.numero_rutina }}" data-paciente-id="{{ paciente.id }}"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                                                            </div> <br> <br>
+                                                            <button class="btn btn-danger delete-rutina-btn" data-rutina-id="{{ rutina.numero_rutina }}" data-paciente-id="{{ paciente.id }}">Quitar Rutina</button>
                                                         {% else %}
                                                             <p>Rutina completa</p>
                                                         {% endif %}
@@ -177,7 +176,7 @@
                 
 
                                     <div class="mb-3">
-                                        <label for="{{ form.recomendacion.id_for_label }}" class="form-label font-weight-bold">Recomendación</label>
+                                        <h3 class="text-center mb-4">Recomendacion</h3>
                                         <input type="text" class="form-control" id="{{ form.recomendacion.id_for_label }}" name="{{ form.recomendacion.name }}" value="{{ paciente.recomendacion }}" maxlength="300">
                                         {{ form.non_field_errors }}
                                     </div>
@@ -192,7 +191,7 @@
                                     
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-center">
-                                            <label for="cambiar-contrasena" class="form-check-label">Cambiar Contraseña </label>
+                                            <label for="cambiar-contrasena" class="form-check-label">Cambiar Contraseña</label>
                                             <input type="checkbox" id="cambiar-contrasena" class="form-check-input">
                                         </div>
                                     </div>

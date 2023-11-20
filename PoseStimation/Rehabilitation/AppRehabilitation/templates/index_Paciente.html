@@ -22,15 +22,13 @@
     <div id="wrapper">
         <!-- Sidebar -->
         {% include 'menuPaciente.html' %}
-        <!-- End of Sidebar -->
-        <!-- Content Wrapper -->
+   
         <div id="content-wrapper" class="d-flex flex-column">
-            <!-- Main Content -->
+     
             <div id="content">
                 <!-- Topbar -->
                 {% include 'barra_Informativa_Paciente.html' %}
-                <!-- End of Topbar -->
-                <!-- Begin Page Content -->
+
                 <div class="container-fluid">
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -38,6 +36,7 @@
                     </div>
                     <!-- Content Row -->
                     <div class="row">
+                        
                         <div class="col-xl-3">
                             <div class="card border-left-primary shadow h-100 py-2">
                                 <div class="card-body">
@@ -207,11 +206,11 @@
         const calendar = new Calendar("#calendar", {
             defaultView: "month",
 
-            useDetailPopup: true,
+           
             isReadOnly: false,
             template: {
                 task: function (model) {
-                    return `<span style="background-color: #9e5fff; color: #fff;"><i class="fa-solid fa-user"></i> ${model.title}</span>`;
+                    return `<span style="background-color: #9e5fff; color: #fff;"><i class="fa-solid fa-user"></i> ${model.title}  </span>`;
                 },
             },
             calendars: [
@@ -248,15 +247,15 @@
             return {
                 id: rutina.fields.numero_rutina,
                 calendarId: "calendario_1",
-                title: `Rutina ${rutina.fields.numero_rutina}`,
-                body: `Repeticiones a Realizar ${rutina.fields.repeticiones_asignadas}`,
+                title: `Rutina ${rutina.fields.numero_rutina +1}`,
+                body: `Repeticiones a Realizar${rutina.fields.repeticiones_asignadas}`,
                 start: fechaInicio,
                 end: fechaFin,
                 isReadOnly: false,
                 isPrivate: false,
                 state: rutina.fields.is_completed,
                 category: "task",
-                raw: "",
+                
             };
         });
 

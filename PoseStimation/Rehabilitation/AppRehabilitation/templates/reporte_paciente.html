@@ -27,7 +27,7 @@
 
 
         .table th {
-            background-color: #141515;
+            background-color: #44c5c5;
             color: white;
             font-size: 10pt;
           
@@ -93,7 +93,7 @@
                 <tbody>
                     {% for dia in data_por_dia %}
                         <tr>
-                            <td class="text-center">{{dia.fecha}}</td>
+                          <br>  <td class="text-center">{{dia.fecha}}</td> <br><br>
                             <td class="text-center">{{dia.progreso}}%</td>
                         </tr>
                     {% endfor %}

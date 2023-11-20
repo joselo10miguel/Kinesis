@@ -48,6 +48,7 @@ urlpatterns = [
     path('delete/<int:paciente_id>/', delete_paciente, name='delete_paciente'),
     path('ejercicios/rutina/', paciente_rutina, name='paciente_rutina'),
     path('ejercicios/rutina/<int:numero_rutina>', rutina, name='rutina'),
+    path('ejercicios/rutina/lesion/media/<int:numero_rutina>', rutina_lesion_media, name='rutina_lesion_media'),
     path('logout/',LogoutView.as_view(),name = 'logout'),
     path('paciente/progress/',get_progress_paciente, name='progress_paciente'),
     path('dashboard/get/pacientes/month/', get_data_by_month, name='get_pacientes_month'),

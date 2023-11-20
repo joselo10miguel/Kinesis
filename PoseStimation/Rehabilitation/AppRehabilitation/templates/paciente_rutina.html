@@ -98,23 +98,27 @@
                                                         {% endif %}
                                                     </td>
                                                     <td>
-
+                                                        
                                                         {% if rutina.fecha_inicio|date:"d-M-Y" == fecha_actual|date:"d-M-Y" %}
-                                                            {% if not rutina.is_completed %}
-                                                            <form method="post"  action="{% url 'rutina' rutina.numero_rutina %}" >
-                                                                {% csrf_token %}
-                                                                <button class="btn btn-warning" >Realizar Rutina</button>
-                                                            </form>
+                                                        {% if not rutina.is_completed %}
+                                            
+                                                            {% if paciente.tipo_lesion == "Lesión media en el hombro izquierdo" or rutina.tipo_lesion == "Lesión media en el hombro derecho" %}
+                                                                <form method="post" action="{% url 'rutina_lesion_media' rutina.numero_rutina %}">
                                                             {% else %}
-                                                                <button class="btn btn-success" disabled>Realizada</button>
+                                                                <form method="post" action="{% url 'rutina' rutina.numero_rutina %}">
                                                             {% endif %}
-
-                                                        {% elif rutina.fecha_inicio|date:"d-M-Y" < fecha_actual|date:"d-M-Y" and rutina.is_completed %}
-                                                            <button class="btn btn-success" disabled>Realizada</button>
+                                                                {% csrf_token %}
+                                                                <button class="btn btn-warning">Realizar Rutina</button>
+                                                            </form>
                                                         {% else %}
-                                                            <button class="btn btn-danger" disabled>No disponible</button>
+                                                            <button class="btn btn-success" disabled>Realizada</button>
                                                         {% endif %}
-                                                    </td>
+                                                    {% elif rutina.fecha_inicio|date:"d-M-Y" < fecha_actual|date:"d-M-Y" and rutina.is_completed %}
+                                                        <button class="btn btn-success" disabled>Realizada</button>
+                                                    {% else %}
+                                                        <button class="btn btn-danger" disabled>No disponible</button>
+                                                    {% endif %}
+                                                    
                                                 </tr>
                                                 {% endfor %}
                                             </tbody>

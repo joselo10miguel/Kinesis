@@ -9,8 +9,12 @@
         <meta name="description" content="" />
         <meta name="author" content="" />
 
-        
-        
+        <link rel="stylesheet" type="text/css" href="https://pixinvent.com/stack-responsive-bootstrap-4-admin-template/app-assets/css/bootstrap-extended.min.css">
+        <link rel="stylesheet" type="text/css" href="https://pixinvent.com/stack-responsive-bootstrap-4-admin-template/app-assets/fonts/simple-line-icons/style.min.css">
+        <link rel="stylesheet" type="text/css" href="https://pixinvent.com/stack-responsive-bootstrap-4-admin-template/app-assets/css/colors.min.css">
+        <link rel="stylesheet" type="text/css" href="https://pixinvent.com/stack-responsive-bootstrap-4-admin-template/app-assets/css/bootstrap.min.css">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+
        
     </head>
     <body class="sb-nav-fixed">
@@ -20,42 +24,72 @@
             <div id="layoutSidenav_content">
                 <main>
                     <div class="container-fluid px-4">
-                        <h1 class="mt-4">Dashboard</h1>
-                        <ol class="breadcrumb mb-4">
+                       <br><br>
+                        <h1 class="breadcrumb mb-4">
                             <li class="breadcrumb-item active">Dashboard</li>
-                        </ol>
+                        </h1>
                         <div class="row">
                             
+                            <div class="col-xl-3 col-sm-6 col-12">
+                                <div class="card">
+                                  <div class="card-content">
+                                    <div class="card-body">
+                                      <div class="media d-flex">
+                                        <div class="media-body text-left">
+                                          <h3 class="warning">{{num_Pacientes}}</h3>
+                                          <span>Número de Pacientes</span>
+                                        </div>
+                                        <div class="align-self-center">
+                                          <i class="icon-pie-chart warning font-large-2 float-right"></i>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            
+                              <div class="col-xl-3 col-sm-6 col-12">
+                                <div class="card">
+                                  <div class="card-content">
+                                    <div class="card-body">
+                                      <div class="media d-flex">
+                                        <div class="media-body text-left">
+                                          <h3 class="success">{{num_Pacientes_M}}</h3>
+                                          <span>Pacientes Masculinos</span>
+                                        </div>
+                                        <div class="align-self-center">
+                                          <i class="fas fa-male success font-large-2 float-right"></i>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div class="col-xl-3 col-sm-6 col-12">
+                                <div class="card">
+                                  <div class="card-content">
+                                    <div class="card-body">
+                                      <div class="media d-flex">
+                                        <div class="media-body text-left">
+                                          <h3 class="danger">{{num_Pacientes_F}}</h3>
+                                          <span>Pacientes Femeninos</span>
+                                        </div>
+                                        <div class="align-self-center">
+                                          <i class="fas fa-female danger font-large-2 float-right"></i>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
                            
 
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card bg-primary bg-gradient text-white mb-4">
-                                    <div class="card-body">Número de Pacientes</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                       <p>{{num_Pacientes}}</p> 
-                                    </div>
-                                       
-                                    
-                                </div>
-                            </div>
-                            <div class="col-xl-3 col-md-6">
-                                <div class="card bg-info bg-gradient text-white mb-4">
-                                    <div class="card-body">Número de Pacientes Femeninos</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                       <p> {{num_Pacientes_F}} </p>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="col-xl-3 col-md-6">
-                                
-                                <div class="card bg-success bg-gradient text-white mb-4">
-                                    <div class="card-body">Número de Pacientes Masculinos</div>
-                                    <div class="card-footer d-flex align-items-center justify-content-between">
-                                        <p> {{num_Pacientes_M}} </p>
-                                    </div>
-                                </div>
-                            </div>
+                            
+
+                    
                           
                         </div>
                         <div class="row">
