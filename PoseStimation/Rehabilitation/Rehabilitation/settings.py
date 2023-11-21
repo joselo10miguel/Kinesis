@@ -93,10 +93,22 @@ WSGI_APPLICATION = 'Rehabilitation.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+#DATABASES = {
+  #  'default': {
+  #      'ENGINE': 'django.db.backends.sqlite3',
+   #     'NAME': BASE_DIR / 'db.sqlite3',
+    #}
+#}
+
+#mysql://root:B2GaA1ddAAH3aeeDBe6DEDHeBc31-hch@monorail.proxy.rlwy.net:25853/railway
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'USER': 'root',
+        'PASSWORD': 'B2GaA1ddAAH3aeeDBe6DEDHeBc31-hch',
+        'HOST': 'monorail.proxy.rlwy.net',
+        'PORT': '25853'
     }
 }
 
