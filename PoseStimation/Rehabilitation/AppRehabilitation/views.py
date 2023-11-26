@@ -16,6 +16,7 @@ from django.http import HttpResponse
 from django.db.models import Count
 from django.contrib.auth.models import User
 from django.core import serializers
+from django.template.context_processors import static
 import json
 import pytz
 import json
@@ -134,43 +135,48 @@ def create_paciente(request):
                 rutinas_asignadas = form.cleaned_data['rutinas_asignadas']
                 data_fechas = request.POST.get('fechas')
 
-                # Crea un nuevo usuario para el paciente
-                user = User.objects.create_user(
-                    username=username,
-                    password=password
-                )
-
-                      
-                # Obtén el ID del usuario recién creado
-                usuario_id = user.id
-
-                new_paciente = form.save(commit=False)
-                new_paciente.doctor = doctor
-                new_paciente.usuario_id = usuario_id  # Asigna el ID del usuario al paciente
-                new_paciente.save()
-
-                fechas = data_fechas.split(",")  
-                
-                #Crear Rutinas
-                repeticiones_por_rutina = request.POST.get('repeticiones_por_rutina')
-                descanso_entre_repeticiones = request.POST.get('tiempo_repeticiones')
-
-                for i in range(rutinas_asignadas):
-                    fecha_parts = fechas[i].split("/")
-                    mes, dia, anio = map(int, fecha_parts)
-                    fecha_inicio = datetime(anio, mes, dia, 10, 0, 0, tzinfo=pytz.UTC)
-                    Rutina.objects.create(
-                        numero_rutina=i,
-                        paciente=new_paciente,
-                        repeticiones_asignadas=repeticiones_por_rutina,
-                        tiempo_descanso_repeticiones=descanso_entre_repeticiones,
-                        fecha_inicio=fecha_inicio
-                    )
-            
-                if user.id:
-                    return redirect('pacientes')
+                existing_user = User.objects.filter(username=username).first()
+                if existing_user:
+                    error_message = 'El nombre de usuario ya pertenece a otra persona.'
                 else:
-                    error_message = 'Hubo un problema al crear las credenciales de usuario.'
+
+                # Crea un nuevo usuario para el paciente
+                    user = User.objects.create_user(
+                        username=username,
+                        password=password
+                    )
+
+                        
+                    # Obtén el ID del usuario recién creado
+                    usuario_id = user.id
+
+                    new_paciente = form.save(commit=False)
+                    new_paciente.doctor = doctor
+                    new_paciente.usuario_id = usuario_id  # Asigna el ID del usuario al paciente
+                    new_paciente.save()
+
+                    fechas = data_fechas.split(",")  
+                    
+                    #Crear Rutinas
+                    repeticiones_por_rutina = request.POST.get('repeticiones_por_rutina')
+                    descanso_entre_repeticiones = request.POST.get('tiempo_repeticiones')
+
+                    for i in range(rutinas_asignadas):
+                        fecha_parts = fechas[i].split("/")
+                        mes, dia, anio = map(int, fecha_parts)
+                        fecha_inicio = datetime(anio, mes, dia, 10, 0, 0, tzinfo=pytz.UTC)
+                        Rutina.objects.create(
+                            numero_rutina=i,
+                            paciente=new_paciente,
+                            repeticiones_asignadas=repeticiones_por_rutina,
+                            tiempo_descanso_repeticiones=descanso_entre_repeticiones,
+                            fecha_inicio=fecha_inicio
+                        )
+                
+                    if user.id:
+                        return redirect('pacientes')
+                    else:
+                        error_message = 'Hubo un problema al crear las credenciales de usuario.'
             except Doctor.DoesNotExist:
                 error_message = 'El doctor no existe.'
             except ValueError:
@@ -277,15 +283,19 @@ def paciente_update(request, paciente_id):
             new_username = request.POST.get('username')
             new_password = request.POST.get('password')
 
-            if new_username:
-                user.username = new_username
-                user.save()
+            existing_user = User.objects.filter(username=new_username).exclude(id=user.id).first()
+            if existing_user:
+                error_message = 'El nombre de usuario ya pertenece a otra persona.'
+            else:
+                if new_username:
+                    user.username = new_username
+                    user.save()
 
-            if new_password:
-                user.set_password(new_password)
-                user.save()
+                if new_password:
+                    user.set_password(new_password)
+                    user.save()
 
-            return redirect('paciente_update',paciente_id=paciente_id)
+                return redirect('pacientes')
         except Exception as e:
             print("Error al actualizar el paciente:", str(e))
             error_message = 'Hubo un problema al actualizar el paciente.'
@@ -494,7 +504,7 @@ def rutina(request, numero_rutina):
                                 cv2.putText(image, " Bien hecho!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
                                 cv2.imshow('Mediapipe Feed', image)
                                 cv2.waitKey(3000)
-                                breakz
+                                break
                             else:
                                 repeticion = Repeticiones.objects.create(rutina=rutina, numero_repeticion=repeticiones_completadas)
 
@@ -948,6 +958,7 @@ def get_progress_paciente(request):
 def pdf_generation(request,paciente_id):
 
     paciente = Paciente.objects.get(id=paciente_id)
+   
 
     fecha_actual = datetime.now(tz=pytz.UTC).date()
 
@@ -958,6 +969,8 @@ def pdf_generation(request,paciente_id):
     rutina =  Rutina.objects.filter(paciente=paciente).first()
     
     rutinas_asignadas = paciente.rutinas_asignadas
+    repeticiones_asignadas = Rutina.repeticiones_asignadas
+    doctor = Paciente.doctor
 
     progreso = (rutinas_totales_completas / rutinas_asignadas) * 100
 
@@ -977,13 +990,17 @@ def pdf_generation(request,paciente_id):
 
 
     context = {
+        'doctor': doctor,
         'paciente': paciente,
         'fecha_actual': fecha_actual,
         'rutinas_completas': rutinas_totales_completas,
+        'repeticiones': repeticiones_asignadas,
         'progreso': progreso,
         'rutina': rutina,
-        'data_por_dia': data_por_dia       
+        'data_por_dia': data_por_dia,
+        'imagen': 'img/logo.png'
     }
+    
 
 
     html_template = get_template('reporte_paciente.html')
