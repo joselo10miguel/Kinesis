@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from django.urls import reverse_lazy
 
@@ -27,7 +28,7 @@ SECRET_KEY = 'django-insecure-1hr3o#9#%texoo-si$=)5)@mr8cp_-&3+&@&7hmix6782_2^su
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', '10.0.2.2']
+ALLOWED_HOSTS = ['kinesis-11fa38b21f42.herokuapp.com', '10.0.2.2']
 
 
 # Application definition
@@ -151,6 +152,8 @@ LOGOUT_REDIRECT_URL = reverse_lazy('signin')
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
