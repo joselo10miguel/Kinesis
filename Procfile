@@ -1,1 +1,1 @@
-web: gunicorn kinesis.wsgi
+web: gunicorn AppRehabilitation.wsgi
