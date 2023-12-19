@@ -104,7 +104,7 @@ WSGI_APPLICATION = 'Rehabilitation.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url(
-         default='postgresql://postgres:postgres@localhost:5432/mysite',
+         default='postgres://kinesis_user:xh0bHsnivWnITY3TiceNBq1lGvko3Phl@dpg-cm0qtmmn7f5s73capkd0-a.oregon-postgres.render.com/kinesis',
     )
 }
 
