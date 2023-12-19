@@ -103,8 +103,8 @@ WSGI_APPLICATION = 'Rehabilitation.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url(
-         default='postgres://kinesis_user:xh0bHsnivWnITY3TiceNBq1lGvko3Phl@dpg-cm0qtmmn7f5s73capkd0-a.oregon-postgres.render.com/kinesis',
+    'default': dj_database_url.config(
+         default='sqlite:///db.sqlite3',
     )
 }
 
