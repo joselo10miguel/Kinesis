@@ -157,8 +157,8 @@ if not DEBUG:    # Tell Django to copy statics to the `staticfiles` directory
 
 
     
-MEDIA_URLS ='/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URLS ='/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Default primary key field type
