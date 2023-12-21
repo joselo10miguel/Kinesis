@@ -149,7 +149,7 @@ LOGOUT_REDIRECT_URL = reverse_lazy('signin')
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/'),
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 # if not DEBUG:    # Tell Django to copy statics to the `staticfiles` directory
@@ -160,7 +160,7 @@ STATICFILES_DIRS = [
 #     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URLS ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
