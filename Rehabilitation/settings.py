@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-from django.urls import reverse_lazy
+# from django.urls import reverse_lazy
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,9 +142,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-LOGIN_REDIRECT_URL = reverse_lazy('dashboard')
+# LOGIN_REDIRECT_URL = reverse_lazy('dashboard')
 
-LOGOUT_REDIRECT_URL = reverse_lazy('signin')
+# LOGOUT_REDIRECT_URL = reverse_lazy('signin')
+
+LOGIN_REDIRECT_URL = 'dashboard'  # Esta configuración redirigirá a 'home/' después del inicio de sesión.
+
+LOGOUT_REDIRECT_URL = 'signin'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
