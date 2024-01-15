@@ -1,0 +1,27 @@
+<!-- video_stream.html -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/video/');
+    
+        // Manejar eventos WebSocket
+        socket.onopen = function (event) {
+            console.log('WebSocket connection opened:', event);
+        };
+    
+        socket.onmessage = function (event) {
+            // Actualizar el contenido de la página con el nuevo fotograma
+            const frameData = event.data;
+            const imageDataUrl = 'data:image/jpeg;base64,' + frameData;
+    
+            // Actualizar el elemento de imagen en tu página con el nuevo frame
+            document.getElementById('video-frame').src = imageDataUrl;
+        };
+    
+        socket.onclose = function (event) {
+            console.log('WebSocket connection closed:', event);
+        };
+    });
+    </script>
+    
+    <img id="video-frame" src="" alt="Video Frame">
+    

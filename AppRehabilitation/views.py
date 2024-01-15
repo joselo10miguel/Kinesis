@@ -17,6 +17,8 @@ from django.db.models import Count
 from django.contrib.auth.models import User
 from django.core import serializers
 from django.template.context_processors import static
+from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import sync_to_async
 import json
 import pytz
 import json
@@ -321,278 +323,6 @@ def delete_paciente(request, paciente_id):
  
 
 
-@login_required
-def rutina(request, numero_rutina):
-
-    if request.method == 'POST':
-
-        def calculate_angle(a, b, c):
-            a = np.array(a)
-            b = np.array(b)
-            c = np.array(c)
-        
-            radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(a[1] - b[1], a[0] - b[0])
-            angle = np.abs(radians * 180.0 / np.pi)
-        
-            if angle > 180.0:
-                angle = 360 - angle
-            return angle
-
-    # Función para calcular la velocidad
-        def calculate_velocity(curr_pos, prev_pos, elapsed_time):
-            # Cálculo de la distancia entre las posiciones actual y anterior
-            distance = np.linalg.norm(np.array(curr_pos) - np.array(prev_pos))
-        # Cálculo de la velocidad como distancia dividida por tiempo
-            velocity = distance / elapsed_time
-            return velocity
-
-
-        mp_drawing = mp.solutions.drawing_utils
-        mp_pose = mp.solutions.pose
-        pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
-
-
-        cap = cv2.VideoCapture(0)
-        counter = 0
-        stage = None
-        stage2 = None
-        prev_hombro = None
-        prev_time = None
-        velocity = 0
-        pantalla_ancho = 950
-        pantalla_alto = 750
-        fase_1_completada = False
-        repeticiones_completadas = 0
-        mensaje = None
-        paciente = Paciente.objects.get(usuario=request.user)
-        rutina = Rutina.objects.get(paciente=paciente, numero_rutina=numero_rutina)
-        repeticiones = rutina.repeticiones_asignadas
-
-        repeticion = Repeticiones.objects.create(rutina=rutina, numero_repeticion=0)
-
-        with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                frame = cv2.flip(frame, 1)
-                image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                image.flags.writeable = False
-
-                results = pose.process(image)
-
-                image.flags.writeable = True
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-                try:
-                    lado = paciente.tipo_lesion
-                    landmarks = results.pose_landmarks.landmark
-                    hip = [landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,
-                    landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
-
-                    hombro = [landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
-                            landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
-
-                    codo = [landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
-                            landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
-
-                    muneca = [landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,
-                            landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y]
-
-                    indice = [landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x,
-                            landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
-
-                    dedo_medio_mcp_punto_medio = [(indice[0] + muneca[0]) / 2, (indice[1] + muneca[1]) / 2]
-
-                    angle_hombro = calculate_angle(hip, hombro, codo)
-                    angle_codo = calculate_angle(hombro, codo, muneca)
-                    angle_muneca = calculate_angle(codo, muneca, dedo_medio_mcp_punto_medio)
-
-
-                    cv2.putText(image, "{:.2f}".format(angle_hombro),
-                                tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
-
-                    cv2.putText(image, "{:.2f}".format(angle_codo),
-                                tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
-
-                    cv2.putText(image, "{:.2f}".format(angle_muneca),
-                                tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
-
-                    if prev_hombro is not None:
-                        curr_time = time.time()
-                        elapsed_time = curr_time - prev_time
-                        velocity = calculate_velocity(hombro, prev_hombro, elapsed_time)
-                        prev_hombro = hombro
-                        prev_time = curr_time
-                    else:
-                        prev_hombro = hombro
-                        prev_time = time.time()
-
-                    if stage is None:
-                        if 5 <= angle_hombro <= 15 and 165 <= angle_codo <= 180:
-
-                            stage = "Inicial"
-                            mensaje = "Levante el brazo"
-                            fase_realizada = Fase.objects.create(
-                                repeticion=repeticion,
-                                nombre_fase='Inicial',
-                                angulo_brazo=angle_hombro,
-                                angulo_codo=angle_codo,
-                                angulo_muneca=angle_muneca,
-                                velocidad_brazo=velocity,
-                                velocidad_codo=0.0,
-                                velocidad_muneca=0.0
-                            )
-                            fase_realizada.save()
-                            print("Fase Inicial Realizada y Guardada con Exito")
-                            stage2 = None      
-
-                            
-                    if stage == "Inicial":
-                        if 75 <= angle_hombro <= 90 and 75 <= angle_codo <= 90:
-                            stage = "Fase 1"
-                            mensaje = " Levante un poco mas"
-                            fase_1_completada = False
-                            stage2 = None
-                            fase_realizada = Fase.objects.create(
-                                repeticion=repeticion,
-                                nombre_fase='Fase 1',
-                                angulo_brazo=angle_hombro,
-                                angulo_codo=angle_codo,
-                                angulo_muneca=angle_muneca,
-                                velocidad_brazo=velocity,
-                                velocidad_codo=0.0,
-                                velocidad_muneca=0.0
-                            )
-                            fase_realizada.save()
-                            print("Fase Inicial Realizada y Guardada con Exito")
-                            
-
-                    if stage == "Fase 1" and not fase_1_completada:
-                        if 165 <= angle_hombro <= 180 and 165 <= angle_codo <= 180:
-                            fase_1_completada = True
-                            stage = "Fase 2"
-                            stage2 = "Fase 2"
-                            mensaje = "Baje el brazo"
-
-                    if stage == "Fase 2":
-                        if angle_hombro > 90:
-                            stage = None
-                            if repeticiones_completadas < repeticiones:
-                                repeticiones_completadas += 1
-                                counter += 1
-                                fase_realizada = Fase.objects.create(
-                                    repeticion=repeticion,
-                                    nombre_fase='Fase 2',
-                                    angulo_brazo=angle_hombro,
-                                    angulo_codo=angle_codo,
-                                    angulo_muneca=angle_muneca,
-                                    velocidad_brazo=velocity,
-                                    velocidad_codo=0.0,
-                                    velocidad_muneca=0.0
-                                )
-                                fase_realizada.save()
-                                print("Fase Inicial Realizada y Guardada con Exito")
-
-                            if counter == repeticiones:
-                                fase_1_completada = False
-                                rutina.is_completed = True
-                                rutina.fecha_fin = datetime.now(tz=pytz.UTC)
-                                rutina.save()
-                                cv2.rectangle(image, (200, 160), (400, 220), (0, 0, 0), -1)
-                                cv2.putText(image, " Bien hecho!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
-                                cv2.imshow('Mediapipe Feed', image)
-                                cv2.waitKey(3000)
-                                break
-                            else:
-                                repeticion = Repeticiones.objects.create(rutina=rutina, numero_repeticion=repeticiones_completadas)
-
-                    shoulder_pt = tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int))
-                    elbow_pt = tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int))
-                    wrist_pt = tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int))
-                    hip_pt = tuple(np.multiply(hip, [image.shape[1], image.shape[0]]).astype(int))
-                    thumb_pt = tuple(np.multiply(dedo_medio_mcp_punto_medio, [image.shape[1], image.shape[0]]).astype(int))
-
-                    A_hombro = image.copy()
-                    cv2.fillPoly(A_hombro, [np.array([shoulder_pt, elbow_pt, hip_pt])], (0, 255, 0))
-                    opacity = 0.3
-                    cv2.addWeighted(A_hombro, opacity, image, 1 - opacity, 0, image)
-
-                    A_codo = image.copy()
-                    cv2.fillPoly(A_codo, [np.array([shoulder_pt, elbow_pt, wrist_pt])], (255, 0, 255))
-                    opacity = 0.3
-                    cv2.addWeighted(A_codo, opacity, image, 1 - opacity, 0, image)
-
-                    A_muneca = image.copy()
-                    cv2.fillPoly(A_muneca, [np.array([elbow_pt, wrist_pt, thumb_pt])], (255, 255, 0))
-                    opacity = 0.3
-                    cv2.addWeighted(A_muneca, opacity, image, 1 - opacity, 0, image)
-
-                    cv2.circle(image, shoulder_pt, 5, (255, 0, 255), -1)
-                    cv2.circle(image, elbow_pt, 5, (0, 255, 0), -1)
-                    cv2.circle(image, hip_pt, 5, (255, 0, 0), -1)
-                    cv2.circle(image, wrist_pt, 5, (255, 0, 255), -1)
-                    cv2.circle(image, thumb_pt, 5, (0, 0, 255), -1)
-                    
-                    cv2.putText(image, '', tuple(np.subtract(hip_pt, (0, 10)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-                    cv2.putText(image, '', tuple(np.subtract(shoulder_pt, (0, 16)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-                    cv2.putText(image, '', tuple(np.add(elbow_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-                    cv2.putText(image, '', tuple(np.add(wrist_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-                    cv2.putText(image, '', tuple(np.add(thumb_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-
-                    cv2.line(image, tuple(np.multiply(hip, [image.shape[1], image.shape[0]]).astype(int)),
-                            tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
-
-                    cv2.line(image, tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)),
-                            tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
-
-                    cv2.line(image, tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)),
-                            tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
-
-                    cv2.line(image, tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)),
-                            tuple(np.multiply(dedo_medio_mcp_punto_medio, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
-                except Exception as e:
-                    print("Error al crear y guardar el objeto Repeticiones:", str(e))
-                pass
-
-                cv2.rectangle(image, (0, 0), (200, 80), (225, 225, 0), -1)
-                cv2.putText(image, ' Numero de Repeticiones', (10, 15),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
-                cv2.putText(image, str(counter),
-                            (80, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
-                cv2.rectangle(image, (700, 0), (200, 80), (255, 255, 255), -1)
-                cv2.putText(image, 'Posicion:', (250, 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-                cv2.putText(image, stage,
-                            (250, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (102, 0, 102), 1, cv2.LINE_AA)
-                cv2.putText(image, stage2,
-                            (250, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (102, 0, 102), 1, cv2.LINE_AA)
-
-                cv2.rectangle(image, (700, 0), (400, 80), (204, 255, 153), -1)
-                cv2.putText(image, 'Por favor', (470, 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-                cv2.putText(image, mensaje,
-                            (420, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
-
-                resized_image = cv2.resize(image, (pantalla_ancho, pantalla_alto))
-                cv2.imshow('Mediapipe Feed', resized_image)
-                
-                if cv2.waitKey(10) & 0xFF == ord('q'):
-                    break
-
-        cap.release()
-        cv2.destroyAllWindows()
-
-        return redirect('paciente_rutina')
-       
-    return render(request, 'abduccion_brazo_Iz.html')
-
 
 
 
@@ -631,17 +361,10 @@ def rutina_lesion_media(request, numero_rutina):
         stage = None
         stage2 = None
         prev_hombro = None
-        prev_codo = None
-        prev_muneca = None
         prev_time = None
         repeticiones = 5
         velocity = 0
-        pantalla_ancho = 950
-        pantalla_alto = 750
-        fase_anterior = None
-        contador_fases = 0
         fase_1_completada = False
-        fase_2_completada = False
         repeticiones_completadas = 0
         mensaje = None
 
@@ -733,13 +456,12 @@ def rutina_lesion_media(request, numero_rutina):
                             print("Fase Inicial Realizada y Guardada con Exito")
                             stage2 = None 
 
-                    # Transition from "inicial" state to "Fase 1"
                     if stage == "Inicial":
                         if 75 <= angle_hombro <= 90 and 165 <= angle_codo <= 180:
                             stage = "Final"
                             mensaje = " Baje el brazo"
                             fase_1_completada = False
-                            stage2 = None  # Here, we clear "Fase 2" when entering "Fase 1"
+                            stage2 = None  
                             print("____________Estado Final________")
                             print("Angulo de Hombro Final: {:.2f}".format(angle_hombro), "°")
                             print("Angulo de Codo Final: {:.2f}".format(angle_codo), "°")
@@ -759,14 +481,14 @@ def rutina_lesion_media(request, numero_rutina):
                             fase_realizada.save()
                             print("Fase Inicial Realizada y Guardada con Exito")
                 
-                    # Check if "Fase 2" is active to increase the counter
+                   
                     if stage == "Final" and not fase_1_completada:
                         if 75 <= angle_hombro <= 90 and 165 <= angle_codo <= 180:
                             fase_1_completada = True
                             stage = "Final"
                             stage2 = "Final"
                             
-                    # Check if "Fase 2" is active to increase the counter
+                    
                     if stage == "Final":
                         if 75 <= angle_hombro <= 90 and 165 <= angle_codo <= 180:
                             stage = None
@@ -865,7 +587,7 @@ def rutina_lesion_media(request, numero_rutina):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
 
                 resized_image = cv2.resize(image, (pantalla_ancho, pantalla_alto))
-                cv2.imshow('Mediapipe Feed', resized_image)
+                cv2.imshow('Mediapipe Feed Prueba', resized_image)
                 
                 if cv2.waitKey(10) & 0xFF == ord('q'):
                     break
@@ -1076,3 +798,577 @@ def delete_rutina(request, rutina_id):
     print("Rutina eliminada con exito")
     response_data = {'success': True}
     return JsonResponse(response_data)
+
+
+def calculate_angle(a, b, c):
+    a = np.array(a)
+    b = np.array(b)
+    c = np.array(c)
+    
+    radians = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(a[1] - b[1], a[0] - b[0])
+    angle = np.abs(radians * 180.0 / np.pi)
+    
+    if angle > 180.0:
+        angle = 360 - angle
+    return angle
+
+
+def calculate_velocity(curr_pos, prev_pos, elapsed_time):
+    # Cálculo de la distancia entre las posiciones actual y anterior
+    distance = np.linalg.norm(np.array(curr_pos) - np.array(prev_pos))
+    # Cálculo de la velocidad como distancia dividida por tiempo
+    velocity = distance / elapsed_time
+    return velocity
+
+def rutina(request,numero_rutina):
+    paciente = Paciente.objects.get(usuario=request.user)
+    tipo_lesion = paciente.tipo_lesion
+    context = {
+        'tipo_lesion': tipo_lesion,
+        'numero_rutina': numero_rutina
+    }
+    return render(request, 'rutina.html', context)
+
+def get_user(request):
+    user = request.user
+    
+    return user
+
+import asyncio
+import base64
+import mediapipe as mp
+
+class RutinaLuxacionConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.accept()
+
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+        self.pose = self.mp_pose.Pose()
+        user = self.scope['user']
+    
+        cap = cv2.VideoCapture(0)
+        counter = 0
+        stage = None
+        stage2 = None
+        prev_hombro = None
+        prev_time = None
+        velocity = 0
+        fase_1_completada = False
+        repeticiones_completadas = 0
+        mensaje = None
+        query_string = self.scope["query_string"].decode("utf-8")
+        numero_rutina = query_string.split('=')[1]
+        paciente = await sync_to_async(Paciente.objects.get)(usuario=user)
+        rutina = await sync_to_async(Rutina.objects.get)(paciente=paciente, numero_rutina=numero_rutina)
+        repeticiones = rutina.repeticiones_asignadas
+
+        repeticion = await sync_to_async(Repeticiones.objects.create)(rutina=rutina, numero_repeticion=0)
+
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as self.pose:
+        
+            while cap.isOpened():
+                ret, frame = cap.read()
+
+                if not ret:
+                    break
+
+                frame = cv2.flip(frame, 1)
+                image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                image.flags.writeable = False
+
+                # Detecta la pose en el frame
+                results = self.pose.process(image)
+
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                try:
+                    lado = paciente.tipo_lesion
+                    landmarks = results.pose_landmarks.landmark
+                    hip = [landmarks[self.mp_pose.PoseLandmark.RIGHT_HIP.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_HIP.value].x,
+                    landmarks[self.mp_pose.PoseLandmark.RIGHT_HIP.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_HIP.value].y]
+
+                    hombro = [landmarks[self.mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
+                            landmarks[self.mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+
+                    codo = [landmarks[self.mp_pose.PoseLandmark.RIGHT_ELBOW.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW.value].x,
+                            landmarks[self.mp_pose.PoseLandmark.RIGHT_ELBOW.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW.value].y]
+
+                    muneca = [landmarks[self.mp_pose.PoseLandmark.RIGHT_WRIST.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST.value].x,
+                            landmarks[self.mp_pose.PoseLandmark.RIGHT_WRIST.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST.value].y]
+
+                    indice = [landmarks[self.mp_pose.PoseLandmark.RIGHT_INDEX.value].x if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_INDEX.value].x,
+                            landmarks[self.mp_pose.PoseLandmark.RIGHT_INDEX.value].y if lado == 'Luxación del hombro izquierdo' else landmarks[self.mp_pose.PoseLandmark.LEFT_INDEX.value].y]
+
+                    dedo_medio_mcp_punto_medio = [(indice[0] + muneca[0]) / 2, (indice[1] + muneca[1]) / 2]
+
+                    angle_hombro = calculate_angle(hip, hombro, codo)
+                    angle_codo = calculate_angle(hombro, codo, muneca)
+                    angle_muneca = calculate_angle(codo, muneca, dedo_medio_mcp_punto_medio)
+
+
+                    cv2.putText(image, "{:.2f}".format(angle_hombro),
+                                tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    cv2.putText(image, "{:.2f}".format(angle_codo),
+                                tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    cv2.putText(image, "{:.2f}".format(angle_muneca),
+                                tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    if prev_hombro is not None:
+                        curr_time = time.time()
+                        elapsed_time = curr_time - prev_time
+                        velocity = calculate_velocity(hombro, prev_hombro, elapsed_time)
+                        prev_hombro = hombro
+                        prev_time = curr_time
+                    else:
+                        prev_hombro = hombro
+                        prev_time = time.time()
+
+                    if stage is None:
+                        if 5 <= angle_hombro <= 15 and 165 <= angle_codo <= 180:
+
+                            stage = "Inicial"
+                            mensaje = "Levante el brazo"
+                            fase_realizada = await sync_to_async(Fase.objects.create)(
+                                repeticion=repeticion,
+                                nombre_fase='Inicial',
+                                angulo_brazo=angle_hombro,
+                                angulo_codo=angle_codo,
+                                angulo_muneca=angle_muneca,
+                                velocidad_brazo=velocity,
+                                velocidad_codo=0.0,
+                                velocidad_muneca=0.0
+                            )
+                            await sync_to_async(fase_realizada.save)()
+                            print("Fase Inicial Realizada y Guardada con Exito")
+                            stage2 = None      
+
+                            
+                    if stage == "Inicial":
+                        if 75 <= angle_hombro <= 90 and 75 <= angle_codo <= 90:
+                            stage = "Fase 1"
+                            mensaje = " Levante un poco mas"
+                            fase_1_completada = False
+                            stage2 = None
+                            fase_realizada = await sync_to_async(Fase.objects.create)(
+                                repeticion=repeticion,
+                                nombre_fase='Fase 1',
+                                angulo_brazo=angle_hombro,
+                                angulo_codo=angle_codo,
+                                angulo_muneca=angle_muneca,
+                                velocidad_brazo=velocity,
+                                velocidad_codo=0.0,
+                                velocidad_muneca=0.0
+                            )
+                            await sync_to_async(fase_realizada.save)()
+                            print("Fase Inicial Realizada y Guardada con Exito")
+                            
+
+                    if stage == "Fase 1" and not fase_1_completada:
+                        if 165 <= angle_hombro <= 180 and 165 <= angle_codo <= 180:
+                            fase_1_completada = True
+                            stage = "Fase 2"
+                            stage2 = "Fase 2"
+                            mensaje = "Baje el brazo"
+
+                    if stage == "Fase 2":
+                        if angle_hombro > 90:
+                            stage = None
+                            if repeticiones_completadas < repeticiones:
+                                repeticiones_completadas += 1
+                                counter += 1
+                                fase_realizada = await sync_to_async(Fase.objects.create)(
+                                    repeticion=repeticion,
+                                    nombre_fase='Fase 2',
+                                    angulo_brazo=angle_hombro,
+                                    angulo_codo=angle_codo,
+                                    angulo_muneca=angle_muneca,
+                                    velocidad_brazo=velocity,
+                                    velocidad_codo=0.0,
+                                    velocidad_muneca=0.0
+                                )
+                                await sync_to_async(fase_realizada.save)()
+                                print("Fase Inicial Realizada y Guardada con Exito")
+
+                            if counter == repeticiones:
+                                fase_1_completada = False
+                                rutina.is_completed = True
+                                rutina.fecha_fin = datetime.now(tz=pytz.UTC)
+                                await sync_to_async(rutina.save)()
+                                cv2.rectangle(image, (200, 160), (400, 220), (0, 0, 0), -1)
+                                cv2.putText(image, " Bien hecho!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
+                                
+                                _, buffer = cv2.imencode('.jpg', image)
+                                image_data = base64.b64encode(buffer.tobytes()).decode('utf-8')
+
+                                await asyncio.sleep(0.1)
+
+                                await self.send(text_data=json.dumps({
+                                    'image': image_data,
+                                    'redirect': '/ejercicios/rutina/'
+                                }))
+
+                                
+                                break
+                            else:
+                                repeticion = await sync_to_async (Repeticiones.objects.create)(rutina=rutina, numero_repeticion=repeticiones_completadas)
+
+                    shoulder_pt = tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int))
+                    elbow_pt = tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int))
+                    wrist_pt = tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int))
+                    hip_pt = tuple(np.multiply(hip, [image.shape[1], image.shape[0]]).astype(int))
+                    thumb_pt = tuple(np.multiply(dedo_medio_mcp_punto_medio, [image.shape[1], image.shape[0]]).astype(int))
+
+                    A_hombro = image.copy()
+                    cv2.fillPoly(A_hombro, [np.array([shoulder_pt, elbow_pt, hip_pt])], (0, 255, 0))
+                    opacity = 0.3
+                    cv2.addWeighted(A_hombro, opacity, image, 1 - opacity, 0, image)
+
+                    A_codo = image.copy()
+                    cv2.fillPoly(A_codo, [np.array([shoulder_pt, elbow_pt, wrist_pt])], (255, 0, 255))
+                    opacity = 0.3
+                    cv2.addWeighted(A_codo, opacity, image, 1 - opacity, 0, image)
+
+                    A_muneca = image.copy()
+                    cv2.fillPoly(A_muneca, [np.array([elbow_pt, wrist_pt, thumb_pt])], (255, 255, 0))
+                    opacity = 0.3
+                    cv2.addWeighted(A_muneca, opacity, image, 1 - opacity, 0, image)
+
+                    cv2.circle(image, shoulder_pt, 5, (255, 0, 255), -1)
+                    cv2.circle(image, elbow_pt, 5, (0, 255, 0), -1)
+                    cv2.circle(image, hip_pt, 5, (255, 0, 0), -1)
+                    cv2.circle(image, wrist_pt, 5, (255, 0, 255), -1)
+                    cv2.circle(image, thumb_pt, 5, (0, 0, 255), -1)
+                    
+                    cv2.putText(image, '', tuple(np.subtract(hip_pt, (0, 10)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.subtract(shoulder_pt, (0, 16)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.add(elbow_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.add(wrist_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.add(thumb_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    cv2.line(image, tuple(np.multiply(hip, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                    cv2.line(image, tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                    cv2.line(image, tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                    cv2.line(image, tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(dedo_medio_mcp_punto_medio, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+                except Exception as e:
+                    print("Error al crear y guardar el objeto Repeticiones:", str(e))
+                pass
+
+                cv2.rectangle(image, (0, 0), (200, 80), (225, 225, 0), -1)
+                cv2.putText(image, ' Numero de Repeticiones', (10, 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(image, str(counter),
+                            (80, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+                cv2.rectangle(image, (700, 0), (200, 80), (255, 255, 255), -1)
+                cv2.putText(image, 'Posicion:', (250, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(image, stage,
+                            (250, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (102, 0, 102), 1, cv2.LINE_AA)
+                cv2.putText(image, stage2,
+                            (250, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (102, 0, 102), 1, cv2.LINE_AA)
+
+                cv2.rectangle(image, (700, 0), (400, 80), (204, 255, 153), -1)
+                cv2.putText(image, 'Por favor', (470, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(image, mensaje,
+                            (420, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                
+                _, buffer = cv2.imencode('.jpg', image)
+                image_data = base64.b64encode(buffer.tobytes()).decode('utf-8')
+
+                await asyncio.sleep(0.1)
+
+                await self.send(text_data=json.dumps({
+                    'image': image_data
+                }))
+
+
+    def disconnect(self, close_code):
+        # Liberar recursos cuando se cierra la conexión WebSocket
+        self.pose.close()
+
+class RutinaLesionMediaConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.accept()
+
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+        self.pose = self.mp_pose.Pose()
+        user = self.scope['user']
+    
+        cap = cv2.VideoCapture(0)
+        counter = 0
+        stage = None
+        stage2 = None
+        prev_hombro = None
+        prev_time = None
+        velocity = 0
+        fase_1_completada = False
+        repeticiones_completadas = 0
+        mensaje = None
+
+        query_string = self.scope["query_string"].decode("utf-8")
+        numero_rutina =  query_string.split('=')[1]       
+        paciente = await sync_to_async(Paciente.objects.get)(usuario=user)
+        rutina = await sync_to_async(Rutina.objects.get)(paciente=paciente, numero_rutina=numero_rutina)
+        repeticiones = rutina.repeticiones_asignadas
+
+        repeticion = await sync_to_async(Repeticiones.objects.create)(rutina=rutina, numero_repeticion=0)
+
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as self.pose:
+        
+            while cap.isOpened():
+                ret, frame = cap.read()
+
+                if not ret:
+                    break
+
+                frame = cv2.flip(frame, 1)
+                image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                image.flags.writeable = False
+
+                # Detecta la pose en el frame
+                results = self.pose.process(image)
+
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                try:
+                    lado = paciente.tipo_lesion
+                    landmarks = results.pose_landmarks.landmark
+
+                    hip_index = self.mp_pose.PoseLandmark.LEFT_HIP.value if lado == 'Lesión media en el hombro derecho' else self.mp_pose.PoseLandmark.RIGHT_HIP.value
+                    hombro_index = self.mp_pose.PoseLandmark.LEFT_SHOULDER.value if lado == 'Lesión media en el hombro derecho' else self.mp_pose.PoseLandmark.RIGHT_SHOULDER.value
+                    codo_index = self.mp_pose.PoseLandmark.LEFT_ELBOW.value if lado == 'Lesión media en el hombro derecho' else self.mp_pose.PoseLandmark.RIGHT_ELBOW.value
+                    muneca_index = self.mp_pose.PoseLandmark.LEFT_WRIST.value if lado == 'Lesión media en el hombro derecho' else self.mp_pose.PoseLandmark.RIGHT_WRIST.value
+                    indice_index = self.mp_pose.PoseLandmark.LEFT_INDEX.value if lado == 'Lesión media en el hombro derecho' else self.mp_pose.PoseLandmark.RIGHT_INDEX.value
+
+                    hip = [landmarks[hip_index].x, landmarks[hip_index].y]
+                    hombro = [landmarks[hombro_index].x, landmarks[hombro_index].y]
+                    codo = [landmarks[codo_index].x, landmarks[codo_index].y]
+                    muneca = [landmarks[muneca_index].x, landmarks[muneca_index].y]
+                    indice = [landmarks[indice_index].x, landmarks[indice_index].y]
+
+                    dedo_medio_mcp_punto_medio = [(indice[0] + muneca[0]) / 2, (indice[1] + muneca[1]) / 2]
+
+                    angle_hombro = calculate_angle(hip, hombro, codo)
+                    angle_codo = calculate_angle(hombro, codo, muneca)
+                    angle_muneca = calculate_angle(codo, muneca, dedo_medio_mcp_punto_medio)
+
+                    cv2.putText(image, "{:.2f}".format(angle_hombro),
+                                tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    cv2.putText(image, "{:.2f}".format(angle_codo),
+                                tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    cv2.putText(image, "{:.2f}".format(angle_muneca),
+                                tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    if prev_hombro is not None:
+                        curr_time = time.time()
+                        elapsed_time = curr_time - prev_time
+                        velocity = calculate_velocity(hombro, prev_hombro, elapsed_time)
+                        prev_hombro = hombro
+                        prev_time = curr_time
+                    else:
+                        prev_hombro = hombro
+                        prev_time = time.time()
+
+                    if stage is None:
+                        if 5 <= angle_hombro <= 15 and 165 <= angle_codo <= 180:
+                            stage = "Inicial"
+                            mensaje = "Levante el brazo"
+                            print("____________Estado Inicial________")
+                            print("Angulo de Hombro Inicial: {:.2f}".format(angle_hombro), "°")
+                            print("Angulo de Codo Inicial: {:.2f}".format(angle_codo), "°")
+                            print("Angulo de muñeca Inicial: {:.2f}".format(angle_muneca), "°")
+                            print("Velocidad Inicial: {:.2f} ".format(velocity), "m/s")
+                            
+                            fase_realizada = await sync_to_async(Fase.objects.create)(
+                                repeticion=repeticion,
+                                nombre_fase='Inicial',
+                                angulo_brazo=angle_hombro,
+                                angulo_codo=angle_codo,
+                                angulo_muneca=angle_muneca,
+                                velocidad_brazo=velocity,
+                                velocidad_codo=0.0,
+                                velocidad_muneca=0.0
+                            )
+                            await sync_to_async(fase_realizada.save)()
+                            print("Fase Inicial Realizada y Guardada con Exito")
+                            stage2 = None 
+
+                    if stage == "Inicial":
+                        if 75 <= angle_hombro <= 90 and 165 <= angle_codo <= 180:
+                            stage = "Final"
+                            mensaje = " Baje el brazo"
+                            fase_1_completada = False
+                            stage2 = None  
+                            print("____________Estado Final________")
+                            print("Angulo de Hombro Final: {:.2f}".format(angle_hombro), "°")
+                            print("Angulo de Codo Final: {:.2f}".format(angle_codo), "°")
+                            print("Angulo de muñeca Final: {:.2f}".format(angle_muneca), "°")
+                            print("Velocidad Final: {:.2f} ".format(velocity), "m/s")
+                              
+                            fase_realizada = await sync_to_async(Fase.objects.create)(
+                                repeticion=repeticion,
+                                nombre_fase='Final',
+                                angulo_brazo=angle_hombro,
+                                angulo_codo=angle_codo,
+                                angulo_muneca=angle_muneca,
+                                velocidad_brazo=velocity,
+                                velocidad_codo=0.0,
+                                velocidad_muneca=0.0
+                            )
+                            await sync_to_async(fase_realizada.save)()
+                            print("Fase Inicial Realizada y Guardada con Exito")
+                
+                   
+                    if stage == "Final" and not fase_1_completada:
+                        if 75 <= angle_hombro <= 90 and 165 <= angle_codo <= 180:
+                            fase_1_completada = True
+                            stage = "Final"
+                            stage2 = "Final"
+                            
+                    
+                    if stage == "Final":
+                        if 75 <= angle_hombro <= 90 and 165 <= angle_codo <= 180:
+                            stage = None
+                            
+                            if repeticiones_completadas < repeticiones:
+                                repeticiones_completadas += 1
+                                counter += 1
+                                
+                                print("_____________________")
+                                print("REPETICION: ", counter)
+                                print("____________________")
+                                
+                            
+                            if counter == repeticiones:
+                                fase_1_completada = False
+                                rutina.is_completed = True
+                                rutina.fecha_fin = datetime.now(tz=pytz.UTC)
+                                await sync_to_async(rutina.save)()
+                                cv2.rectangle(image, (200, 160), (400, 220), (0, 0, 0), -1)
+                                cv2.putText(image, " Bien hecho!", (200, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
+
+                                _, buffer = cv2.imencode('.jpg', image)
+                                image_data = base64.b64encode(buffer.tobytes()).decode('utf-8')
+
+                                await asyncio.sleep(0.1)
+
+                                await self.send(text_data=json.dumps({
+                                    'image': image_data,
+                                    'redirect': '/ejercicios/rutina/'
+                                }))
+
+                                break
+                            else:
+                                repeticion =await sync_to_async(Repeticiones.objects.create)(rutina=rutina, numero_repeticion=repeticiones_completadas)     
+
+                    shoulder_pt = tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int))
+                    elbow_pt = tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int))
+                    wrist_pt = tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int))
+                    hip_pt = tuple(np.multiply(hip, [image.shape[1], image.shape[0]]).astype(int))
+                    thumb_pt = tuple(np.multiply(dedo_medio_mcp_punto_medio, [image.shape[1], image.shape[0]]).astype(int))
+
+                    A_hombro = image.copy()
+                    cv2.fillPoly(A_hombro, [np.array([shoulder_pt, elbow_pt, hip_pt])], (0, 255, 0))
+                    opacity = 0.3
+                    cv2.addWeighted(A_hombro, opacity, image, 1 - opacity, 0, image)
+
+                    A_codo = image.copy()
+                    cv2.fillPoly(A_codo, [np.array([shoulder_pt, elbow_pt, wrist_pt])], (255, 0, 255))
+                    opacity = 0.3
+                    cv2.addWeighted(A_codo, opacity, image, 1 - opacity, 0, image)
+
+                    A_muneca = image.copy()
+                    cv2.fillPoly(A_muneca, [np.array([elbow_pt, wrist_pt, thumb_pt])], (255, 255, 0))
+                    opacity = 0.3
+                    cv2.addWeighted(A_muneca, opacity, image, 1 - opacity, 0, image)
+
+                    cv2.circle(image, shoulder_pt, 5, (255, 0, 255), -1)
+                    cv2.circle(image, elbow_pt, 5, (0, 255, 0), -1)
+                    cv2.circle(image, hip_pt, 5, (255, 0, 0), -1)
+                    cv2.circle(image, wrist_pt, 5, (255, 0, 255), -1)
+                    cv2.circle(image, thumb_pt, 5, (0, 0, 255), -1)
+                    
+                    cv2.putText(image, '', tuple(np.subtract(hip_pt, (0, 10)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.subtract(shoulder_pt, (0, 16)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.add(elbow_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.add(wrist_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                    cv2.putText(image, '', tuple(np.add(thumb_pt, (0, 20)).astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+                    cv2.line(image, tuple(np.multiply(hip, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                    cv2.line(image, tuple(np.multiply(hombro, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                    cv2.line(image, tuple(np.multiply(codo, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                    cv2.line(image, tuple(np.multiply(muneca, [image.shape[1], image.shape[0]]).astype(int)),
+                            tuple(np.multiply(dedo_medio_mcp_punto_medio, [image.shape[1], image.shape[0]]).astype(int)), (0, 0, 0), 1)
+
+                except Exception as e:
+                    print("Error al crear y guardar el objeto Repeticiones:", str(e))
+                pass
+
+                cv2.rectangle(image, (0, 0), (200, 80), (225, 225, 0), -1)
+                cv2.putText(image, ' Numero de Repeticiones', (10, 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(image, str(counter),
+                            (80, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+                cv2.rectangle(image, (700, 0), (200, 80), (255, 255, 255), -1)
+                cv2.putText(image, 'Posicion:', (250, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(image, stage,
+                            (250, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (102, 0, 102), 1, cv2.LINE_AA)
+                cv2.putText(image, stage2,
+                            (250, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (102, 0, 102), 1, cv2.LINE_AA)
+
+                cv2.rectangle(image, (700, 0), (400, 80), (204, 255, 153), -1)
+                cv2.putText(image, 'Por favor', (470, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(image, mensaje,
+                            (420, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 1, cv2.LINE_AA)
+                
+                _, buffer = cv2.imencode('.jpg', image)
+                image_data = base64.b64encode(buffer.tobytes()).decode('utf-8')
+
+                await asyncio.sleep(0.1)
+
+                await self.send(text_data=json.dumps({
+                    'image': image_data
+                }))
+
+
+    def disconnect(self, close_code):
+        # Liberar recursos cuando se cierra la conexión WebSocketa
+        cv2.destroyAllWindows()
+        self.pose.close()

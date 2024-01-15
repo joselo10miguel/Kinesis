@@ -1,19 +1,4 @@
-"""
-URL configuration for AppRehabilitation project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path,include
 from rest_framework.authtoken import views
@@ -23,8 +8,9 @@ from AppRehabilitation.views import *
 from AppRehabilitation.api import api
 from rest_framework.routers import DefaultRouter
 from AppRehabilitation.api.api import DoctorViewSet, PacienteViewSet, RutinaViewSet, RepeticionesViewSet,UserAPIView, FaseViewSet
+from AppRehabilitation.consumers import VideoConsumer
 
- 
+
 router = DefaultRouter()
 router.register(r'doctores', DoctorViewSet)
 router.register(r'pacientes', PacienteViewSet)
@@ -56,4 +42,5 @@ urlpatterns = [
     path('add/rutina/<int:paciente_id>/', add_rutina, name='add_rutina'),
     path('update/rutina/<int:rutina_id>/', edit_rutina, name='edit_rutina'),
     path('delete/rutina/<int:rutina_id>/', delete_rutina, name='delete_rutina'),
+    path('ejercicios/rutina/<int:numero_rutina>', rutina, name='rutina'),
 ]
