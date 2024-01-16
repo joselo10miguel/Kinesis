@@ -1,7 +1,7 @@
 <!-- video_stream.html -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const socket = new WebSocket('ws://' + window.location.host + '/ws/video/');
+        const socket = new WebSocket('wss://' + window.location.host + '/wss/video/');
     
         // Manejar eventos WebSocket
         socket.onopen = function (event) {
