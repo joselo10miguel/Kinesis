@@ -20,29 +20,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 MEDIA_URLS ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-#SECRET_KEY = 'django-insecure-1hr3o#9#%texoo-si$=)5)@mr8cp_-&3+&@&7hmix6782_2^su'
-
 SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
-#DEBUG = True
-
-#ALLOWED_HOSTS = ['kinesis-11fa38b21f42.herokuapp.com', '10.0.2.2',]
-#ALLOWED_HOSTS = ['*']
-
-# Application definition
 DEBUG = 'RENDER' not in os.environ
 
 
-ALLOWED_HOSTS = ['*', 'kinesis-11fa38b21f42.herokuapp.com', '10.0.2.2',]
+ALLOWED_HOSTS = ['*']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
+
+
+# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -55,8 +55,6 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'rest_framework',
     'rest_framework.authtoken',
-    'channels',
-    
 ]
 
 MIDDLEWARE = [
@@ -69,7 +67,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 ROOT_URLCONF = 'Rehabilitation.urls'
 
@@ -112,31 +109,15 @@ CHANNEL_LAYERS={
      }
 }
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 
 DATABASES = {
     'default': dj_database_url.config(
          default='sqlite:///db.sqlite3',
     )
 }
-
-
-
-#mysql://root:B2GaA1ddAAH3aeeDBe6DEDHeBc31-hch@monorail.proxy.rlwy.net:25853/railway
-#DATABASES = {
-#   'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
- #       'NAME': BASE_DIR / 'db.sqlite3',
-#        'USER': 'root',
-#        'PASSWORD': 'B2GaA1ddAAH3aeeDBe6DEDHeBc31-hch',
- #       'HOST': 'monorail.proxy.rlwy.net',
- #       'PORT': '25853'
-#    }
-#}
 
 
 # Password validation
@@ -173,6 +154,8 @@ LOGIN_REDIRECT_URL = reverse_lazy('dashboard')
 
 LOGOUT_REDIRECT_URL = reverse_lazy('signin')
 
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -184,6 +167,16 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# if not DEBUG:    # Tell Django to copy statics to the `staticfiles` directory
+#     # in your application directory on Render.
+#     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+#     # Turn on WhiteNoise storage backend that takes care of compressing static files
+#     # and creating unique names for each version so they can safely be cached forever.
+#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

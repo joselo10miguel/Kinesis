@@ -5,7 +5,7 @@ from .consumers import VideoConsumer
 application = ProtocolTypeRouter({
     "websocket": URLRouter(
         [
-            path("ws/video/", VideoConsumer.as_asgi()),
+            path("wss/video/", VideoConsumer.as_asgi()),
             # ... otras rutas WebSocket ...
         ]
     ),
