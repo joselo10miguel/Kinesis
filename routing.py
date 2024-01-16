@@ -15,8 +15,8 @@ application = ProtocolTypeRouter({
     "websocket": AllowedHostsOriginValidator(
         AuthMiddlewareStack(
             URLRouter([
-                 path('wss/rutina/luxacion/', RutinaLuxacionConsumer.as_asgi()),
-                 path('wss/rutina/lesion/media/', RutinaLesionMediaConsumer.as_asgi()),
+                 path('rutina/luxacion/', RutinaLuxacionConsumer.as_asgi()),
+                 path('rutina/lesion/media/', RutinaLesionMediaConsumer.as_asgi()),
             ])
         )
     ),
