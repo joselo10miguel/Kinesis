@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from django.urls import reverse_lazy
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +43,7 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-    
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -100,7 +101,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Rehabilitation.wsgi.application'
-
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # Channels
 ASGI_APPLICATION = 'routing.application'
 CHANNEL_LAYERS={
@@ -170,11 +171,13 @@ LOGOUT_REDIRECT_URL = reverse_lazy('signin')
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static/')
+]
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URLS ='/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
