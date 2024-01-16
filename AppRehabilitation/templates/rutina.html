@@ -212,7 +212,7 @@
     console.log(ruta);
     console.log(tipoLesion);
     var ws_scheme = window.location.protocol == "https:"?"wss":"ws"; 
-    const socket = new WebSocket(`https://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
+    const socket = new WebSocket(`wss://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
 
     const video = document.getElementById("client");
 
