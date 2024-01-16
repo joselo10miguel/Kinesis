@@ -37,7 +37,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 DEBUG = 'RENDER' not in os.environ
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'kinesis-11fa38b21f42.herokuapp.com', '10.0.2.2',]
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
@@ -110,15 +110,17 @@ CHANNEL_LAYERS={
      }
 }
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+         default='sqlite:///db.sqlite3',
+    )
 }
+
 
 #mysql://root:B2GaA1ddAAH3aeeDBe6DEDHeBc31-hch@monorail.proxy.rlwy.net:25853/railway
 #DATABASES = {
