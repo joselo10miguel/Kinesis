@@ -211,8 +211,13 @@
 
     console.log(ruta);
     console.log(tipoLesion);
-    var ws_scheme = window.location.protocol == "https:"?"wss":"ws"; 
-    const socket = new WebSocket(`wss://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
+    //var ws_scheme = window.location.protocol == "https:"?"wss":"ws"; 
+    //const socket = new WebSocket(`wss://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
+
+    var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${ws_scheme}://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
+
+
 
     const video = document.getElementById("client");
 
