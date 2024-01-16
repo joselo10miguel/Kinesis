@@ -5,7 +5,7 @@ from  AppRehabilitation.views  import RutinaLuxacionConsumer, RutinaLesionMediaC
 from channels.auth import AuthMiddlewareStack
 
 application = ProtocolTypeRouter({
-    'http':get_asgi_application(),
+    'https':get_asgi_application(),
     
     'websocket': AuthMiddlewareStack(
         URLRouter([
