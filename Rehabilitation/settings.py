@@ -17,22 +17,32 @@ from django.urls import reverse_lazy
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+MEDIA_URLS ='/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1hr3o#9#%texoo-si$=)5)@mr8cp_-&3+&@&7hmix6782_2^su'
+#SECRET_KEY = 'django-insecure-1hr3o#9#%texoo-si$=)5)@mr8cp_-&3+&@&7hmix6782_2^su'
 
-
+SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
 
-ALLOWED_HOSTS = ['kinesis-11fa38b21f42.herokuapp.com', '10.0.2.2',]
+#ALLOWED_HOSTS = ['kinesis-11fa38b21f42.herokuapp.com', '10.0.2.2',]
 #ALLOWED_HOSTS = ['*']
 
 # Application definition
+DEBUG = 'RENDER' not in os.environ
 
+
+ALLOWED_HOSTS = ['*']
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:    
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+    
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
