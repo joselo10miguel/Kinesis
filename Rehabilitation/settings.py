@@ -73,7 +73,7 @@ CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000','http://localhost:8000/']
 # Uncomment this line if you want to force HTTPS when deploying to production
 #SECURE_SSL_REDIRECT = True 
 
-ASGI_APPLICATION = "Test.asgi.application"
+ASGI_APPLICATION = "Rehabilitation.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
