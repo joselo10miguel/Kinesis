@@ -21,6 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URLS ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a4e9745b (Web Socket)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -39,6 +43,10 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a4e9745b (Web Socket)
 # Application definition
 
 INSTALLED_APPS = [
@@ -49,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'daphne',
     'AppRehabilitation',
     'widget_tweaks',
     'rest_framework',
