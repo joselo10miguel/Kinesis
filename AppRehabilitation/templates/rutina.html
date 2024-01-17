@@ -189,8 +189,6 @@
       videoFileName = 'Abduccion.mp4';  // Nombre del video para lesión media
     }
     
-    console.log("Ruta del video:", ruta + videoFileName);
-
     // Verifica que la ruta y el nombre del video no estén vacíos antes de continuar
     if (ruta === '' || videoFileName === '') {
       console.error('Tipo de lesión no reconocido:', tipoLesion);
@@ -204,22 +202,14 @@
     var videoElement = document.getElementById('tutorialVideo');
     videoElement.src = "/static/videos/"  + videoFileName;  // Ajusta la ruta y el nombre del video según tu estructura
 
-
-
-
-
-
-    console.log(ruta);
-    console.log(tipoLesion);
-    //var ws_scheme = window.location.protocol == "https:"?"wss":"ws"; 
-    //const socket = new WebSocket(`wss://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
-
     var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
-    const socket = new WebSocket(`${ws_scheme}://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
-
-
+    const socket = new WebSocket(`${ws_scheme}://${window.location.host}/${ruta}?numero_rutina=${numero_rutina}`);
 
     const video = document.getElementById("client");
+  
+    socket.onopen = function (e) {
+            console.log('WebSocket connection established.');
+    };
 
     socket.onmessage = function (event) {
         const data = JSON.parse(event.data);
