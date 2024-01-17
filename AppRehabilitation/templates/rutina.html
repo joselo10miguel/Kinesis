@@ -1,0 +1,248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="stylesheet" href="{% static 'css/progress_bar.css' %}">
+  <link href="{% static 'css/estilos/all.min.css' %}" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+    rel="stylesheet">
+
+  <!-- Custom styles for this template-->
+  <link href="{% static 'css/estilos/sb-admin-2.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/estilos/sb-admin-2.css' %}" rel="stylesheet">
+  <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+
+  <title>Realizar Rutina</title>
+
+  <!-- Custom fonts for this template-->
+  <style>
+    * {
+      transition: all 0.3s;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    .align-center-scale {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    @-webkit-keyframes pound {
+      to {
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes pound {
+      to {
+        transform: scale(1.1);
+      }
+    }
+
+    .video {
+      width: 120vmin;
+      height: auto;
+      border-radius: 10px;
+    }
+
+    .video:hover {
+      cursor: pointer;
+      border: 5px solid #66b6ea;
+    }
+
+    @media screen and (max-width: 568px) {
+      .video {
+        width: 90vmin;
+        height: auto;
+      }
+    }
+  </style>
+
+</head>
+
+<body id="page-top">
+
+  <div id="wrapper">
+
+
+    <div id="content-wrapper" class="d-flex flex-column">
+
+      <div id="content">
+
+       
+        <div class="container-fluid">
+
+
+          <div class="row">
+
+
+            <div class="col-lg-12 mb-4">
+
+              <div class="card shadow mb-4">
+                <div class="card-body">
+
+                  <div style="border-radius: 10px; margin-left: 20px;" class="align-center-scale">
+                    <img id='client' class="video"
+                      src='https://cdn.discordapp.com/attachments/848543264783990804/1051901701654851705/face.gif'
+                      alt="screen">
+                  </div>
+
+                  <div class="align-center-scale" style="padding-top:20px;">
+                    <div class="btn-group" role="group">
+                      <button class="btn btn-success" onclick='Mode()'>Realizar Rutina</button>
+                      <!--<button class="btn btn-primary" onclick='showTutorial()' >Tutorial</button>-->
+                    </div>
+                  </div>
+                  {{paciente.tipo_lesion}}
+
+
+                  <div id="tutorialSection" style="display:none; text-align: center;">
+                    <div class="card mt-4" style="width: 70%; margin: auto;">
+                      <div class="card-header">
+                        Tutorial
+                      </div>
+                      <div class="card-body">
+                        <video controls width="60%" id="tutorialVideo">
+                          <!-- La fuente del video se asignará dinámicamente a través de JavaScript -->
+                          Tu navegador no admite el elemento de video.
+                        </video>
+                      </div>
+                    </div>
+                  </div>
+
+                  
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+
+      <footer class="sticky-footer bg-white">
+        {% include 'footerPaciente.html' %}
+      </footer>
+    </div>
+
+
+  </div>
+  </div>
+
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+
+
+  function scrollToTutorial() {
+      document.getElementById('tutorialSection').scrollIntoView({
+        behavior: 'smooth'
+      });
+    }
+  function showTutorial() {
+    document.getElementById('tutorialSection').style.display = 'block';
+  }
+
+
+</script>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+  function Mode() {
+    
+    var numero_rutina = {{numero_rutina}};
+    var tipoLesion = `${{tipo_lesion}}`;
+
+    var ruta = (
+        tipoLesion === '$Luxación del hombro derecho' || tipoLesion === '$Luxación del hombro izquierdo'
+    ) ? 'rutina/luxacion/' : (
+        tipoLesion === '$Lesión media en el hombro izquierdo' || tipoLesion === '$Lesión media en el hombro derecho'
+    ) ? 'rutina/lesion/media/' : '';
+
+// Mapea el tipo de lesión a la ruta del video
+    var ruta = "";
+    var videoFileName = "";  // Variable para almacenar el nombre del video
+
+    if (tipoLesion.includes('Luxación del hombro derecho') || tipoLesion.includes('Luxación del hombro izquierdo')) {
+      ruta = 'rutina/luxacion/';
+      videoFileName = 'abduccion2.mp4';  // Nombre del video para luxación
+    } else if (tipoLesion.includes('Lesión media en el hombro izquierdo') || tipoLesion.includes('Lesión media en el hombro derecho')) {
+      ruta = 'rutina/lesion/media/';
+      videoFileName = 'Abduccion.mp4';  // Nombre del video para lesión media
+    }
+    
+    console.log("Ruta del video:", ruta + videoFileName);
+
+    // Verifica que la ruta y el nombre del video no estén vacíos antes de continuar
+    if (ruta === '' || videoFileName === '') {
+      console.error('Tipo de lesión no reconocido:', tipoLesion);
+      return;
+    }
+
+    // Agrega el código para mostrar el video
+    var videoSection = document.getElementById('tutorialSection');
+    videoSection.style.display = 'block';
+
+    var videoElement = document.getElementById('tutorialVideo');
+    videoElement.src = "/static/videos/"  + videoFileName;  // Ajusta la ruta y el nombre del video según tu estructura
+
+
+
+    console.log(ruta);
+    console.log(tipoLesion);
+    //var ws_scheme = window.location.protocol == "https:"?"wss":"ws"; 
+    //const socket = new WebSocket(`wss://${window.location.host}/wss/${ruta}?numero_rutina=${numero_rutina}`);
+
+    var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${ws_scheme}://${window.location.host}/${ruta}?numero_rutina=${numero_rutina}`);
+
+    const video = document.getElementById("client");
+
+    socket.onopen = function (e) {
+            console.log('WebSocket connection established.');
+        };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        const imageData = data.image;
+
+        if (data.redirect) {
+            window.location.href = data.redirect;
+            return;
+        }
+
+        video.src = "data:image/jpeg;base64," + imageData;
+    };
+
+    socket.onclose = function (event) {
+        console.error("WebSocket closed:", event);
+        console.error("Close code:", event.code);
+        console.error("Close reason:", event.reason);
+    };
+
+    socket.onerror = function (event) {
+        console.error("WebSocket error:", event);
+    };
+  }
+</script>
+
+
+</html>
