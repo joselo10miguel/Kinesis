@@ -22,25 +22,22 @@ MEDIA_URLS ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
+#SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
-
+DEBUG = os.environ.get("DEBUG" ,"False" ).lower() == "true"
 
 ALLOWED_HOSTS = ['*']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-
-
 
 # Application definition
 
@@ -52,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'AppRehabilitation',
+    'daphne',
     'widget_tweaks',
     'rest_framework',
     'rest_framework.authtoken',
@@ -67,6 +65,21 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000','http://localhost:8000/']
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Uncomment this line if you want to force HTTPS when deploying to production
+#SECURE_SSL_REDIRECT = True 
+
+ASGI_APPLICATION = "Test.asgi.application"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 ROOT_URLCONF = 'Rehabilitation.urls'
 
@@ -101,14 +114,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Rehabilitation.wsgi.application'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
-# Channels
-ASGI_APPLICATION = 'routing.application'
-CHANNEL_LAYERS={
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-     }
-}
-
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
