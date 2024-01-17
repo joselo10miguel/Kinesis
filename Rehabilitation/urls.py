@@ -8,7 +8,7 @@ from AppRehabilitation.views import *
 from AppRehabilitation.api import api
 from rest_framework.routers import DefaultRouter
 from AppRehabilitation.api.api import DoctorViewSet, PacienteViewSet, RutinaViewSet, RepeticionesViewSet,UserAPIView, FaseViewSet
-from AppRehabilitation.consumers import VideoConsumer
+
 
 
 router = DefaultRouter()
