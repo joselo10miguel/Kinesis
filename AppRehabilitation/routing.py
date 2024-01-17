@@ -1,12 +1,7 @@
-from channels.routing import ProtocolTypeRouter, URLRouter
-from django.urls import path
-from .consumers import VideoConsumer
+from AppRehabilitation.views import RutinaLuxacionConsumer,RutinaLesionMediaConsumer
+from django.urls import re_path
 
-application = ProtocolTypeRouter({
-    "websocket": URLRouter(
-        [
-            path("wss/video/", VideoConsumer.as_asgi()),
-            # ... otras rutas WebSocket ...
-        ]
-    ),
-})
+websocket_urlpatterns = [
+    re_path(r"rutina/luxacion/", RutinaLuxacionConsumer.as_asgi()),
+     re_path(r"rutina/lesion/media/", RutinaLesionMediaConsumer.as_asgi()),
+]
