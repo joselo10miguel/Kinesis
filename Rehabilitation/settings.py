@@ -21,17 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URLS ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-<<<<<<< HEAD
-=======
-
->>>>>>> a4e9745b (Web Socket)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 #SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = 'django-insecure-a+jtz!3k&dpf+jka)!!9!*$_at*pc&ykz@vglxou6y1w506otv'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG" ,"False" ).lower() == "true"
@@ -43,28 +39,24 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:    
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> a4e9745b (Web Socket)
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'daphne',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'daphne',
     'AppRehabilitation',
     'widget_tweaks',
     'rest_framework',
     'rest_framework.authtoken',
+   
 ]
 
-ASGI_APPLICATION = "Rehabilitation.asgi.application"
+ASGI_APPLICATION = 'Rehabilitation.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
@@ -147,7 +139,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-SECURE_SSL_REDIRECT = True
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -172,7 +163,7 @@ STATIC_URL = 'static/'
 
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/')
+   os.path.join(BASE_DIR, 'static/')
 ]
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
