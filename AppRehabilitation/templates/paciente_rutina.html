@@ -16,7 +16,6 @@
 
     <!-- Custom fonts for this template-->
     
- 
     
 </head>
 
@@ -101,12 +100,7 @@
                                                         
                                                         {% if rutina.fecha_inicio|date:"d-M-Y" == fecha_actual|date:"d-M-Y" %}
                                                         {% if not rutina.is_completed %}
-                                            
-                                                            {% if paciente.tipo_lesion == "Lesión media en el hombro izquierdo" or rutina.tipo_lesion == "Lesión media en el hombro derecho" %}
-                                                                <form method="post" action="{% url 'rutina_lesion_media' rutina.numero_rutina %}">
-                                                            {% else %}
-                                                                <form method="post" action="{% url 'rutina' rutina.numero_rutina %}">
-                                                            {% endif %}
+                                                             <form method="post" action="{% url 'rutina' rutina.numero_rutina %}">
                                                                 {% csrf_token %}
                                                                 <button class="btn btn-warning">Realizar Rutina</button>
                                                             </form>
@@ -155,9 +149,6 @@
     <!-- End of Page Wrapper -->
 
     
-
-<script src="{% static 'javaScript/mediapipe.js' %}"></script>
-
 <script src="{% static  'js/progress.js' %}"></script>
 <script src="{% static  'js/rutina_paciente.js' %}"></script>
 
