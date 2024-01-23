@@ -177,7 +177,7 @@
         tipoLesion === '$Lesión media en el hombro izquierdo' || tipoLesion === '$Lesión media en el hombro derecho'
     ) ? 'rutina/lesion/media/' : '';
 
-// Mapea el tipo de lesión a la ruta del video
+   // Mapea el tipo de lesión a la ruta del video
     var ruta = "";
     var videoFileName = "";  // Variable para almacenar el nombre del video
 
@@ -212,6 +212,7 @@
     };
 
     socket.onmessage = function (event) {
+      console.log('WebSocket message received:', event.data);
         const data = JSON.parse(event.data);
         const imageData = data.image;
 
