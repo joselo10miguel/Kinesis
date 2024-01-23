@@ -21,17 +21,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URLS ='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 #SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = 'django-insecure-a+jtz!3k&dpf+jka)!!9!*$_at*pc&ykz@vglxou6y1w506otv'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG" ,"False" ).lower() == "true"
+
 
 ALLOWED_HOSTS = ['*']
 
@@ -42,33 +42,29 @@ if RENDER_EXTERNAL_HOSTNAME:
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'daphne',
     'AppRehabilitation',
     'widget_tweaks',
     'rest_framework',
     'rest_framework.authtoken',
+   
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000','http://localhost:8000/']
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Uncomment this line if you want to force HTTPS when deploying to production
-#SECURE_SSL_REDIRECT = True 
-
-ASGI_APPLICATION = "Rehabilitation.asgi.application"
+ASGI_APPLICATION = 'Rehabilitation.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -80,8 +76,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-
 
 ROOT_URLCONF = 'Rehabilitation.urls'
 
@@ -169,7 +163,7 @@ STATIC_URL = 'static/'
 
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/')
+   os.path.join(BASE_DIR, 'static/')
 ]
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

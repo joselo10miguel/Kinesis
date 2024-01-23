@@ -9,8 +9,6 @@ from AppRehabilitation.api import api
 from rest_framework.routers import DefaultRouter
 from AppRehabilitation.api.api import DoctorViewSet, PacienteViewSet, RutinaViewSet, RepeticionesViewSet,UserAPIView, FaseViewSet
 
-
-
 router = DefaultRouter()
 router.register(r'doctores', DoctorViewSet)
 router.register(r'pacientes', PacienteViewSet)
